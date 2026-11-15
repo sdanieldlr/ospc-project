@@ -58,17 +58,11 @@ def run_parallel(
         for child in child_seeds
     ]
 
-    if workers == 1:
-        # Actual sequential execution, without pool overhead.
-        results = list(map(_simulate_one, tasks))
-    else:
-        # Independent replications are distributed among CPU processes.
-        with ProcessPoolExecutor(max_workers=workers) as pool:
-            results = list(pool.map(
-                _simulate_one,
-                tasks,
-                chunksize=max(1, n_replications // (workers * 4)),
-            ))
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        results = list(pool.map(
+            _simulate_one, tasks,
+            chunksize=max(1, n_replications // (workers * 4)),
+        ))
 
     total_calls = sum(result[0] for result in results)
     total_answered = sum(result[1] for result in results)
@@ -83,3 +77,33 @@ def run_parallel(
         "service_level": total_answered / total_calls,
         "average_wait_sec": total_wait / total_calls,
     }
+if __name__ == "__main__":
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(
+        description="Parallel call center simulation"
+    )
+    parser.add_argument("--workers", type=int, default=1)
+    parser.add_argument("--replications", type=int, default=20)
+    parser.add_argument("--calls", type=int, default=1000)
+    parser.add_argument("--agents", type=int, default=9)
+    parser.add_argument("--arrival-rate", type=float, default=2.0)
+    parser.add_argument("--service-time", type=float, default=180)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--target-wait", type=float, default=30)
+
+    args = parser.parse_args()
+
+    result = run_parallel(
+        n_replications=args.replications,
+        n_calls=args.calls,
+        n_agents=args.agents,
+        arrival_rate=args.arrival_rate,
+        service_time=args.service_time,
+        workers=args.workers,
+        seed=args.seed,
+        target_wait=args.target_wait,
+    )
+
+    print(json.dumps(result, indent=2))
