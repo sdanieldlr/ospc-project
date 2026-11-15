@@ -18,3 +18,20 @@ measure runtime and scaling behavior.
 
 Implementation, usage instructions, and dependencies will be added as the
 project develops.
+
+## Run locally
+
+From the project root, install the dependency, generate the sample calls, and
+run the sequential baseline:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m src.data_gen
+python -m src.baseline
+```
+
+Run the correctness checks with:
+
+```powershell
+python -m pytest -q
+```
